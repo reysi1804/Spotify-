@@ -1,87 +1,93 @@
 
-var URL = "https://raw.githubusercontent.com/reysi1804/Spotify-/c550a1eaf0c41216dc2e1511eb83464fa669bdaa/pour_jouer.json";
+var URL = "https://raw.githubusercontent.com/reysi1804/Spotify-/main/pour_jouer.json";
 
 function getTracks() {
   try {
     var response = myspoti.http.get(URL);
 
-    if (!response.ok) return [];
+    if (!response.ok) {
+      return { error: "Erreur GitHub : HTTP " + response.status };
+    }
 
-    // Important : json est une propriété, pas une fonction
     var data = response.json();
 
-    if (!Array.isArray(data)) return [];
+    if (!Array.isArray(data)) {
+      return { error: "Le fichier JSON ne contient pas une liste." };
+    }
 
-    return data.filter(function (t) {
-      return t &&
-        typeof t.title === "string" &&
-        Array.isArray(t.artists);
-    });
+    return {
+      tracks: data.filter(function (t) {
+        return t &&
+          typeof t.title === "string" &&
+          Array.isArray(t.artists);
+      })
+    };
   } catch (e) {
-    myspoti.log("Erreur Reysi Music : " + e);
-    return [];
+    return { error: "Erreur de chargement : " + String(e) };
   }
 }
 
-function makeCard(track, index) {
+function trackText(t, i) {
   return {
-    type: "card",
-    title: track.title,
-    subtitle: track.artists.join(", ") +
-      (track.length ? " • " +
-      Math.floor(track.length / 60) + ":" +
-      String(track.length % 60).padStart(2, "0") : ""),
-    action: "track_" + index
+    type: "text",
+    text: (i + 1) + ". " + t.title +
+      "\n" + t.artists.join(", "),
+    style: "body"
   };
 }
 
 myspoti.provide("home", function () {
-  var tracks = getTracks();
+  var result = getTracks();
 
-  if (!tracks.length) {
+  if (result.error) {
     return [{
-      type: "section",
       title: "Reysi Music",
       blocks: [{
         type: "text",
-        text: "Aucun morceau trouvé. Vérifie le catalogue GitHub."
+        text: result.error
       }]
     }];
   }
 
+  var tracks = result.tracks;
+
+  if (!tracks.length) {
+    return [{
+      title: "Reysi Music",
+      blocks: [{
+        type: "text",
+        text: "Aucun morceau trouvé dans ton catalogue."
+      }]
+    }];
+  }
+
+  var blocks = [];
+
+  for (var i = 0; i < Math.min(tracks.length, 10); i++) {
+    blocks.push(trackText(tracks[i], i));
+  }
+
   return [{
-    type: "section",
-    title: "Reysi Music 🎵",
-    subtitle: tracks.length + " morceaux",
-    blocks: tracks.slice(0, 12).map(makeCard)
+    title: "🎵 Reysi Music",
+    blocks: [{
+      type: "text",
+      text: tracks.length + " morceaux disponibles"
+    }].concat(blocks)
   }];
 });
 
 myspoti.provide("search", function (input) {
-  var tracks = getTracks();
-  var q = String(input.query || "").toLowerCase();
+  var result = getTracks();
+  if (result.error) return [];
 
-  return tracks
+  var query = String(input.query || "").toLowerCase();
+
+  return result.tracks
     .filter(function (t) {
-      return (t.title + " " + t.artists.join(" "))
-        .toLowerCase().indexOf(q) !== -1;
+      return (
+        t.title + " " + t.artists.join(" ")
+      ).toLowerCase().indexOf(query) !== -1;
     })
     .slice(0, 4)
-    .map(makeCard);
-});
-
-myspoti.provide("tap", function (event) {
-  var action = String(event.action || "");
-
-  if (action.indexOf("track_") !== 0) return;
-
-  var index = Number(action.substring(6));
-  var track = getTracks()[index];
-
-  if (track) {
-    myspoti.notify(
-      "Recherche dans Spotify : " +
-      track.title + " - " + track.artists.join(", ")
-    );
-  }
+    .map(trackText);
 });
