@@ -8,7 +8,7 @@ function getTracks() {
     if (!response.ok) return [];
 
     // Important : json est une propriété, pas une fonction
-    var data = response.json;
+    var data = response.json();
 
     if (!Array.isArray(data)) return [];
 
