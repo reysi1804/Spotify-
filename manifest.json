@@ -1,0 +1,39 @@
+
+{
+  "id": "io.github.reysi1804.reysimusic",
+  "name": "Reysi Music",
+  "version": "1.0.2",
+  "versionCode": 3,
+  "apiVersion": 1,
+  "author": "reysi1804",
+  "description": "Ton catalogue musical personnel.",
+  "main": "main.js",
+  "category": "discovery",
+  "tags": [
+    "spotify",
+    "musique",
+    "playlist",
+    "catalogue"
+  ],
+  "actions": [
+    {
+      "name": "home.sections",
+      "why": "Afficher les musiques sur l'accueil."
+    },
+    {
+      "name": "search.provide",
+      "why": "Rechercher dans ton catalogue."
+    },
+    {
+      "name": "network",
+      "hosts": [
+        "raw.githubusercontent.com"
+      ],
+      "why": "Lire le catalogue GitHub."
+    },
+    {
+      "name": "notify",
+      "why": "Afficher les informations du morceau."
+    }
+  ]
+}
